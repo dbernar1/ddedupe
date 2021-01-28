@@ -15,11 +15,35 @@ function itShouldRequireLoggedInAdmin() {
 	itShouldRequireLoggedInUser();
 
 	context( 'When the logged in user is not an admin', function() {
+		before( async function() {
+			await this.logIn();
+			await this.performRequest();
+		} );
+
 		itShouldRespondWith( 403 );
 	} );
 }
 
-const itShouldValidate = () => {};
+function itShouldValidate( recordType, rules ) {
+	describe( 'Validation rules', function() {
+		for ( const [ fieldName, rulesForField ] of Object.entries( rules ) ) {
+			describe( fieldName, function() {
+				rulesForField.forEach( ruleName => {
+					it( `should be ${ ruleName }`, async function() {
+						switch( ruleName ) {
+							case 'required':
+								const record = this.getValidRecord( recordType );
+								delete record[ fieldName ];
+								await this.performRequest( record );
+								expect( this.res.status ).to.equal( 400 );
+							break;
+						}
+					} );
+				} );
+			} );
+		}
+	} );
+}
 
 function itShouldSaveRecord( expectedRecord ) {
 	describe( 'Saved record', function() {
@@ -57,6 +81,10 @@ function itShouldRespondWith( statusCode, expectedResponse ) {
 
 function itShouldRequireLoggedInUser() {
 	context( 'When the user is not logged in', function() {
+		before( async function() {
+			await this.performRequest();
+		} );
+
 		itShouldRespondWith( 401 );
 	} );
 }
@@ -72,6 +100,7 @@ function itShouldExcludeDatabaseFields( namesOfFieldsToConfirmAreNotPresent ) {
 function performRequest( requestBody ) {
 	return request( this.app )
 	[ this.httpMethod.toLowerCase() ]( this.pathPattern )
+	.set( 'Authorization', `Bearer ${ this.token }` )
 	.send( requestBody )
 	.then( res => this.res = res );
 }
