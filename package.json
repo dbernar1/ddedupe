@@ -1,0 +1,10 @@
+{
+  "name": "ddedupe",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "git@github.com:dbernar1/ddedupe.git",
+  "license": "MIT",
+  "dependencies": {
+    "supertest": "^6.1.3"
+  }
+}
