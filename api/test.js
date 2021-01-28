@@ -1,4 +1,5 @@
 const request = require( 'supertest' );
+const uuidv4 = require( 'uuid' ).v4;
 
 function describeEndpoint( httpMethod, pathPattern, endpointBehaviorDescription ) {
 	describe( `${ httpMethod } ${ pathPattern}`, function() {
@@ -89,17 +90,80 @@ function itShouldRequireLoggedInUser() {
 	} );
 }
 
-const itShouldContainRecordsWith = () => {};
-const itShouldRequireExistingRecord = () => {};
-const itShouldUpdateExistingRecord = () => {};
+function itShouldContainRecords( expectedRecords ) {
+	it( 'should contain the expected records', function() {
+		expect( expectedRecords.length ).to.equal( this.res.body.length );
+	} );
+
+	describe( 'Each returned record', function() {
+		for ( const fieldName in expectedRecords[ 0 ] ) {
+			it( `should include ${ fieldName }`, function() {
+				for ( let i = 0; i < expectedRecords.length; i++ ) {
+					expect( this.res.body[ i ][ fieldName ] ).to.equal( 'function' === typeof expectedRecords[ i ][ fieldName ]
+						? expectedRecords[ i ][ fieldName ].call( this )
+						: expectedRecords[ i ][ fieldName ]
+					);
+				}
+			} );
+		}
+	} );
+}
+
+function itShouldRequireExistingRecord( recordType ) {
+	context( `When no ${ recordType } id is provided`, function() {
+		before( async function() {
+			await this.performRequest( this.getValidRecord( recordType ), [ [ ':restaurant', '', ] ] );
+		} );
+
+		itShouldRespondWith( 404 );
+	} );
+
+	context( `When a non-existent ${ recordType } id is provided`, function() {
+		before( async function() {
+			await this.performRequest( this.getValidRecord( recordType ), [ [ ':restaurant', uuidv4(), ] ] );
+		} );
+
+		itShouldRespondWith( 404 );
+	} );
+}
+
+function itShouldUpdateExistingRecord( expectedValues ) {
+	describe( 'Updated record', function() {
+		before( async function() {
+			this.savedRecord = await this.getSavedRecord( 'restaurant', this.res.body.id );
+		} );
+
+		for ( const [ fieldName, expectedValue ] of Object.entries( expectedValues ) ) {
+			it( `should have the new ${ fieldName }`, function() {
+				if ( 'function' === typeof expectedValue ) {
+					expect( expectedValue.call( this, this.savedRecord[ fieldName ] ) ).to.be.true;
+				} else {
+					expect( this.savedRecord[ fieldName ] ).to.equal( expectedValue );
+				}
+			} );
+		}
+	} );
+}
+
 const itShouldDeleteExistingRecord = () => {};
 
 function itShouldExcludeDatabaseFields( namesOfFieldsToConfirmAreNotPresent ) {
 }
 
-function performRequest( requestBody ) {
+const composePath = ( pathPattern, pathParams ) => {
+	let path = pathPattern;
+
+	pathParams.forEach( ( [ placeHolder, value, ] ) => path = path.replace( placeHolder, value ) );
+
+	return path;
+}
+function performRequest( requestBody, pathParams ) {
+	const path = pathParams
+		? composePath( this.pathPattern, pathParams )
+		: this.pathPattern;
+
 	return request( this.app )
-	[ this.httpMethod.toLowerCase() ]( this.pathPattern )
+	[ this.httpMethod.toLowerCase() ]( path )
 	.set( 'Authorization', `Bearer ${ this.token }` )
 	.send( requestBody )
 	.then( res => this.res = res );
@@ -112,7 +176,7 @@ module.exports = {
         itShouldSaveRecord,
         itShouldRespondWith,
         itShouldRequireLoggedInUser,
-        itShouldContainRecordsWith,
+        itShouldContainRecords,
         itShouldRequireExistingRecord,
         itShouldUpdateExistingRecord,
         itShouldDeleteExistingRecord,
