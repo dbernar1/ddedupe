@@ -21,7 +21,7 @@ function itShouldRequireLoggedInAdmin() {
 
 const itShouldValidate = () => {};
 
-function itShouldSaveRecord( recordType, expectedRecord ) {
+function itShouldSaveRecord( expectedRecord ) {
 	describe( 'Saved record', function() {
 		for ( const [ fieldName, expectedValue ] of Object.entries( expectedRecord ) ) {
 			it( `should include ${ fieldName }`, function() {
