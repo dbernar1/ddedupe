@@ -60,6 +60,18 @@ function itShouldSaveRecord( expectedRecord ) {
 	} );
 }
 
+function itShouldHaveTheFollowingData( expectedData ) {
+	for ( let [ fieldName, expectedValue ] of Object.entries( expectedData ) ) {
+		it( `should include ${ fieldName }`, function() {
+			if ( 'function' === typeof expectedValue ) {
+				 expectedValue = expectedValue.call( this );
+			}
+
+			expect( this.subject[ fieldName ] ).to.equal( expectedValue );
+		} );
+	}
+}
+
 function itShouldRespondWith( statusCode, expectedResponse ) {
 	it( `should respond with ${ statusCode }`, function() {
 		expect( this.res.status ).to.equal( statusCode );
@@ -90,16 +102,16 @@ function itShouldRequireLoggedInUser() {
 	} );
 }
 
-function itShouldContainRecords( expectedRecords ) {
+function itShouldContainRecords( expectedRecords, getActualRecords=function() { return this.res.body; } ) {
 	it( 'should contain the expected records', function() {
-		expect( expectedRecords.length ).to.equal( this.res.body.length );
+		expect( expectedRecords.length ).to.equal( getActualRecords.call( this ).length );
 	} );
 
 	describe( 'Each returned record', function() {
 		for ( const fieldName in expectedRecords[ 0 ] ) {
 			it( `should include ${ fieldName }`, function() {
 				for ( let i = 0; i < expectedRecords.length; i++ ) {
-					expect( this.res.body[ i ][ fieldName ] ).to.equal( 'function' === typeof expectedRecords[ i ][ fieldName ]
+					expect( getActualRecords.call( this )[ i ][ fieldName ] ).to.equal( 'function' === typeof expectedRecords[ i ][ fieldName ]
 						? expectedRecords[ i ][ fieldName ].call( this )
 						: expectedRecords[ i ][ fieldName ]
 					);
@@ -181,6 +193,7 @@ module.exports = {
         itShouldUpdateExistingRecord,
         itShouldDeleteExistingRecord,
 	itShouldExcludeDatabaseFields,
+	itShouldHaveTheFollowingData,
 	requestMethods: {
 		performRequest,
 	},
