@@ -1,20 +1,22 @@
 const requireLoggedInUser = ( req, res, next ) => {
-                if ( req.user ) { 
-                        next();
-                } else {
-                        res.sendStatus( 401 );
-                }   
-        };  
+	if ( req.user ) {
+		next();
+	} else {
+		res.sendStatus( 401 );
+	}
+};
+
+const allowAnonymousUser = ( req, res, next ) => next();
 
 const requireLoggedInAdmin = ( req, res, next ) => {
 	requireLoggedInUser( req, res, () => {
-		if ( req.user.admin ) { 
+		if ( req.user.admin ) {
 			next();
 		} else {
 			res.sendStatus( 403 );
-		}   
+		}
 	} );
-}; 
+};
 
 const requireExistingRecord = ( recordType ) => ( req, res, next ) => {
 	req.app.getSavedRecord( recordType, req.params[ recordType ] )
@@ -29,11 +31,11 @@ const requireExistingRecord = ( recordType ) => ( req, res, next ) => {
 };
 
 const confirmValidDataSentFor = ( recordType, validateRecord ) => ( req, res, next ) => {
-        if ( validateRecord( req.body ) ) { 
+        if ( validateRecord( req.body ) ) {
                 next();
         } else {
                 res.sendStatus( 400 );
-        }   
+        }
 };
 
 module.exports = {
@@ -41,4 +43,5 @@ module.exports = {
 	requireLoggedInAdmin,
 	requireExistingRecord,
 	confirmValidDataSentFor,
+	allowAnonymousUser,
 };

@@ -82,7 +82,7 @@ function itShouldRespondWith( statusCode, expectedResponse ) {
 			for ( const [ fieldName, expectedValue ] of Object.entries( expectedResponse ) ) {
 				it( `should include ${ fieldName }`, function() {
 					if ( 'function' === typeof expectedValue ) {
-						expect( expectedValue.call( this, this.savedRecord[ fieldName ] ) ).to.be.true;
+						expect( expectedValue.call( this, this.res.body[ fieldName ] ) ).to.be.true;
 					} else {
 						expect( this.res.body[ fieldName ] ).to.equal( expectedValue );
 					}
@@ -160,6 +160,15 @@ function itShouldUpdateExistingRecord( recordType, expectedValues ) {
 const itShouldDeleteExistingRecord = () => {};
 
 function itShouldExcludeDatabaseFields( namesOfFieldsToConfirmAreNotPresent ) {
+	describe( 'Each returned record', function() {
+		namesOfFieldsToConfirmAreNotPresent.forEach( fieldName => {
+			it( `should not include ${ fieldName }`, function() {
+				this.res.body.forEach( returnedRecord => {
+					expect( fieldName in returnedRecord ).to.be.false;
+				} );
+			} );
+		} );
+	} );
 }
 
 const composePath = ( pathPattern, pathParams ) => {
