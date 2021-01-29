@@ -33,7 +33,7 @@ function itShouldValidate( recordType, rules ) {
 					it( `should be ${ ruleName }`, async function() {
 						switch( ruleName ) {
 							case 'required':
-								const record = this.getValidRecord( recordType );
+								const record = await this.getValidRecord( recordType );
 								delete record[ fieldName ];
 								await this.performRequest( record );
 								expect( this.res.status ).to.equal( 400 );
@@ -112,7 +112,7 @@ function itShouldContainRecords( expectedRecords ) {
 function itShouldRequireExistingRecord( recordType ) {
 	context( `When no ${ recordType } id is provided`, function() {
 		before( async function() {
-			await this.performRequest( this.getValidRecord( recordType ), [ [ ':restaurant', '', ] ] );
+			await this.performRequest( await this.getValidRecord( recordType ), [ [ `:${ recordType }`, '', ] ] );
 		} );
 
 		itShouldRespondWith( 404 );
@@ -120,17 +120,17 @@ function itShouldRequireExistingRecord( recordType ) {
 
 	context( `When a non-existent ${ recordType } id is provided`, function() {
 		before( async function() {
-			await this.performRequest( this.getValidRecord( recordType ), [ [ ':restaurant', uuidv4(), ] ] );
+			await this.performRequest( await this.getValidRecord( recordType ), [ [ `:${ recordType }`, uuidv4(), ] ] );
 		} );
 
 		itShouldRespondWith( 404 );
 	} );
 }
 
-function itShouldUpdateExistingRecord( expectedValues ) {
+function itShouldUpdateExistingRecord( recordType, expectedValues ) {
 	describe( 'Updated record', function() {
 		before( async function() {
-			this.savedRecord = await this.getSavedRecord( 'restaurant', this.res.body.id );
+			this.savedRecord = await this.getSavedRecord( recordType, this.res.body.id );
 		} );
 
 		for ( const [ fieldName, expectedValue ] of Object.entries( expectedValues ) ) {
