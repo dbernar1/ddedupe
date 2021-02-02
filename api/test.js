@@ -1,5 +1,6 @@
 const request = require( 'supertest' );
 const uuidv4 = require( 'uuid' ).v4;
+const moment = require( 'moment' );
 
 function describeEndpoint( httpMethod, pathPattern, endpointBehaviorDescription ) {
 	describe( `${ httpMethod } ${ pathPattern}`, function() {
@@ -31,12 +32,69 @@ function itShouldValidate( recordType, rules ) {
 			describe( fieldName, function() {
 				rulesForField.forEach( ruleName => {
 					it( `should be ${ ruleName }`, async function() {
+						let record;
+
+						if ( ruleName.includes( 'reference existing' ) ) {
+							ruleName = 'reference existing';
+						}
+
 						switch( ruleName ) {
 							case 'required':
-								const record = await this.getValidRecord( recordType );
+								record = await this.getValidRecord( recordType );
 								delete record[ fieldName ];
 								await this.performRequest( record );
 								expect( this.res.status ).to.equal( 400 );
+							break;
+							case 'reference existing':
+								record = await this.getValidRecord( recordType );
+								record[ fieldName ] = uuidv4();
+								await this.performRequest( record );
+								expect( this.res.status ).to.equal( 400 );
+							break;
+							case 'format:date':
+								record = await this.getValidRecord( recordType );
+								record[ fieldName ] = 'Not-a-date';
+								await this.performRequest( record );
+								expect( this.res.status ).to.equal( 400 );
+							break;
+							case 'format:email':
+								record = await this.getValidRecord( recordType );
+								record[ fieldName ] = 'not-an-email-address';
+								await this.performRequest( record );
+								expect( this.res.status ).to.equal( 400 );
+							break;
+							case 'unique':
+								record = await this.getValidRecord( recordType );
+								await this.performRequest( record );
+								const secondRecord = await this.getValidRecord( recordType );
+								await this.performRequest( {
+									...secondRecord,
+									[ fieldName ]: record[ fieldName ],
+								} );
+
+								expect( this.res.status ).to.equal( 400 );
+							break;
+							case 'meets-password-requirements':
+								await Promise.all( [
+									'testTest', // missing a digit
+									'testtest1', // missing an upper-case letter
+									'TESTTEST1', // missing a lower-case letter
+									'Test1', // too short
+								].map( async invalidPassword => {
+									record = await this.getValidRecord( recordType );
+									record[ fieldName ] = invalidPassword;
+									await this.performRequest( record );
+									expect( this.res.status ).to.equal( 400 );
+								} ) );
+							break;
+							case 'not in the future':
+								record = await this.getValidRecord( recordType );
+								record[ fieldName ] = moment().add( 2, 'days' ).format( 'YYYY-MM-DD' );
+								await this.performRequest( record );
+								expect( this.res.status ).to.equal( 400 );
+							break;
+							default:
+								expect( false ).to.be.true;
 							break;
 						}
 					} );

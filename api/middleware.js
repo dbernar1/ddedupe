@@ -30,8 +30,12 @@ const requireExistingRecord = ( recordType ) => ( req, res, next ) => {
 	} );
 };
 
-const confirmValidDataSentFor = ( recordType, validateRecord ) => ( req, res, next ) => {
-        if ( validateRecord( req.body ) ) {
+const confirmValidDataSentFor = ( recordType, validateRecord ) => async ( req, res, next ) => {
+        if ( await validateRecord(
+		req.body,
+		req.app,
+		req.params[ recordType ]
+	) ) {
                 next();
         } else {
                 res.sendStatus( 400 );

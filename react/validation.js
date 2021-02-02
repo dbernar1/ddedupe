@@ -1,15 +1,7 @@
 import { useState, } from 'react';
 import isEmail from 'validator/lib/isEmail';
 import isEmpty from 'validator/lib/isEmpty';
-import PasswordValidator from 'password-validator';
-
-const passwordSchema = new PasswordValidator();
-
-passwordSchema
-.is().min( 8 )
-.has().uppercase()
-.has().lowercase()
-.has().digits();
+import passwordSchema from '../api/passwordSchema';
 
 const required = value => ! isEmpty( value );
 
