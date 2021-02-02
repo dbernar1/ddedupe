@@ -74,11 +74,11 @@ module.exports = function( recordType, recordTypeDefinition ) {
 					recordType,
 					req.body,
 					recordTypeDefinition.userUpdatableFields || recordTypeDefinition.userSettableFields,
-					req[ recordType ]
+					req.requestedRecord
 				)
 				.then( updatedRecord => {
 					res.send( recordTypeDefinition.toJSON( {
-						...req[ recordType ],
+						...req.requestedRecord,
 						...updatedRecord,
 					} ) );
 				} )
@@ -93,7 +93,14 @@ module.exports = function( recordType, recordTypeDefinition ) {
 			requireLoggedInAdmin,
 			requireExistingRecord( recordType ),
 			( req, res, next ) => {
-				req.app.deleteRecord( recordType, req[ recordType ] )
+				if (
+					'validateDeletion' in recordTypeDefinition
+					&& ! recordTypeDefinition.validateDeletion( req )
+				) {
+					return res.sendStatus( 400 );
+				}
+
+				req.app.deleteRecord( recordType, req.requestedRecord )
 				.then( () => {
 					res.sendStatus( 204 );
 				} )

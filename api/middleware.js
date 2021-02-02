@@ -22,7 +22,7 @@ const requireExistingRecord = ( recordType ) => ( req, res, next ) => {
 	req.app.getSavedRecord( recordType, req.params[ recordType ] )
 	.then( record => {
 		if ( record ) {
-			req[ recordType ] = record;
+			req.requestedRecord = record;
 			next();
 		} else {
 			res.sendStatus( 404 );
