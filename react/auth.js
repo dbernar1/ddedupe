@@ -70,20 +70,17 @@ const createAuth = ({
 
 		return {
 			user,
-			signIn(email, password) {
-				return axios
-					.post(loginUrl, {
-						email,
-						password,
-					})
-					.then(({ data }) => {
-						setUser(data);
-						persistUserData(data);
-					});
+			async signIn(email, password) {
+				const { data } = axios.post(loginUrl, {
+					email,
+					password,
+				});
+				setUser(data);
+				persistUserData(data);
 			},
-			signOut() {
-				return axios
-					.post(
+			async signOut() {
+				try {
+					await axios.post(
 						logoutUrl,
 						{},
 						{
@@ -91,11 +88,11 @@ const createAuth = ({
 								user
 							),
 						}
-					)
-					.finally(() => {
-						setUser(null);
-						removeUserData();
-					});
+					);
+				} finally {
+					setUser(null);
+					removeUserData();
+				}
 			},
 		};
 	};

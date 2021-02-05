@@ -25,82 +25,70 @@ const createProviderCreator = ({ useAuthHeaders, baseUrl }) => (
 					: `${baseUrl}/${recordType}`;
 			},
 			[`${recordType}s`]: records,
-			[`fetch${capitalizedRecordType}s`]: function () {
-				return axios
-					.get(value.getUrl(), {
+			[`fetch${capitalizedRecordType}s`]: async function () {
+				const { data } = await axios.get(
+					value.getUrl(),
+					{
 						headers: authHeaders,
-					})
-					.then(({ data }) => setRecords(data));
+					}
+				);
+
+				setRecords(data);
 			},
-			[`delete${capitalizedRecordType}`]: function (id) {
-				return axios
-					.delete(value.getUrl(id), {
-						headers: authHeaders,
-					})
-					.then(() => {
-						if (records) {
-							setRecords(
-								records.filter(
-									(
-										record
-									) =>
-										id !==
-										record.id
-								)
-							);
-						}
-					});
+			[`delete${capitalizedRecordType}`]: async function (
+				id
+			) {
+				await axios.delete(value.getUrl(id), {
+					headers: authHeaders,
+				});
+
+				if (records) {
+					setRecords(
+						records.filter(
+							(record) =>
+								id !== record.id
+						)
+					);
+				}
 			},
 			[`create${capitalizedRecordType}`]: function (record) {
-				return axios
-					.post(value.getUrl(), record, {
+				const { data } = axios.post(
+					value.getUrl(),
+					record,
+					{
 						headers: authHeaders,
-					})
-					.then(({ data }) => {
-						if (records) {
-							setRecords(
-								[data].concat(
-									records
-								)
-							);
-						}
-					});
+					}
+				);
+
+				if (records) {
+					setRecords([data].concat(records));
+				}
 			},
-			[`update${capitalizedRecordType}`]: function (
+			[`update${capitalizedRecordType}`]: async function (
 				id,
 				record
 			) {
-				return axios
-					.put(value.getUrl(id), record, {
-						headers: authHeaders,
-					})
-					.then(() => {
-						if (records) {
-							const recordLocation = records.findIndex(
-								(record) =>
-									id ===
-									record.id
-							);
+				await axios.put(value.getUrl(id), record, {
+					headers: authHeaders,
+				});
 
-							const newRecords = records.filter(
-								(record) =>
-									id !==
-									record.id
-							);
+				if (records) {
+					const recordLocation = records.findIndex(
+						(record) => id === record.id
+					);
 
-							newRecords.splice(
-								recordLocation,
-								0,
-								{
-									...records[recordLocation],
-									...record,
-									id,
-								}
-							);
+					const newRecords = records.filter(
+						(record) => id !== record.id
+					);
 
-							setRecords(newRecords);
-						}
+					newRecords.splice(recordLocation, 0, {
+						...records[recordLocation],
+						...record,
+						id,
 					});
+
+					setRecords(newRecords);
+				}
 			},
 		};
 

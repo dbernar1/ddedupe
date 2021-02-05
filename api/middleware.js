@@ -18,17 +18,18 @@ const requireLoggedInAdmin = (req, res, next) => {
 	});
 };
 
-const requireExistingRecord = (recordType) => (req, res, next) => {
-	req.app
-		.getSavedRecord(recordType, req.params[recordType])
-		.then((record) => {
-			if (record) {
-				req.requestedRecord = record;
-				next();
-			} else {
-				res.sendStatus(404);
-			}
-		});
+const requireExistingRecord = (recordType) => async (req, res, next) => {
+	const record = await req.app.getSavedRecord(
+		recordType,
+		req.params[recordType]
+	);
+
+	if (record) {
+		req.requestedRecord = record;
+		next();
+	} else {
+		res.sendStatus(404);
+	}
 };
 
 const confirmValidDataSentFor = (recordType, validateRecord) => async (

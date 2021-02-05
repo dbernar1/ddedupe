@@ -36,20 +36,20 @@ module.exports = function (recordType, recordTypeDefinition) {
 				recordTypeDefinition.validate
 			),
 			(req, res, next) => {
-				req.app
-					.saveRecord(
+				try {
+					const savedRecord = req.app.saveRecord(
 						recordType,
 						req,
 						recordTypeDefinition
-					)
-					.then((savedRecord) => {
-						res.send(
-							recordTypeDefinition.toJSON(
-								savedRecord
-							)
-						);
-					})
-					.catch(next);
+					);
+					res.send(
+						recordTypeDefinition.toJSON(
+							savedRecord
+						)
+					);
+				} catch (error) {
+					next(error);
+				}
 			}
 		);
 	}
@@ -61,18 +61,24 @@ module.exports = function (recordType, recordTypeDefinition) {
 				? requireLoggedInAdmin
 				: requireLoggedInUser,
 			(req, res, next) => {
-				("getAll" in recordTypeDefinition
-					? recordTypeDefinition.getAll(req.app)
-					: req.app.getAllRecords(recordType)
-				)
-					.then((records) =>
-						res.send(
-							records.map(
-								recordTypeDefinition.toJSON
-							)
+				try {
+					const records = await(
+						"getAll" in recordTypeDefinition
+							? recordTypeDefinition.getAll(
+									req.app
+							  )
+							: req.app.getAllRecords(
+									recordType
+							  )
+					);
+					res.send(
+						records.map(
+							recordTypeDefinition.toJSON
 						)
-					)
-					.catch(next);
+					);
+				} catch (error) {
+					next(error);
+				}
 			}
 		);
 	}
@@ -87,26 +93,24 @@ module.exports = function (recordType, recordTypeDefinition) {
 					recordTypeDefinition.validate
 			),
 			requireExistingRecord(recordType),
-			(req, res, next) => {
-				req.app
-					.updateRecord(
+			async (req, res, next) => {
+				try {
+					const updatedRecords = await req.app.updateRecord(
 						recordType,
 						req.body,
 						recordTypeDefinition.userUpdatableFields ||
 							recordTypeDefinition.userSettableFields,
 						req.requestedRecord
-					)
-					.then((updatedRecord) => {
-						res.send(
-							recordTypeDefinition.toJSON(
-								{
-									...req.requestedRecord,
-									...updatedRecord,
-								}
-							)
-						);
-					})
-					.catch(next);
+					);
+					res.send(
+						recordTypeDefinition.toJSON({
+							...req.requestedRecord,
+							...updatedRecord,
+						})
+					);
+				} catch (error) {
+					next(error);
+				}
 			}
 		);
 	}
@@ -116,7 +120,7 @@ module.exports = function (recordType, recordTypeDefinition) {
 			updateAndDeletePath,
 			requireLoggedInAdmin,
 			requireExistingRecord(recordType),
-			(req, res, next) => {
+			async (req, res, next) => {
 				if (
 					"validateDeletion" in
 						recordTypeDefinition &&
@@ -127,15 +131,16 @@ module.exports = function (recordType, recordTypeDefinition) {
 					return res.sendStatus(400);
 				}
 
-				req.app
-					.deleteRecord(
+				try {
+					await req.app.deleteRecord(
 						recordType,
 						req.requestedRecord
-					)
-					.then(() => {
-						res.sendStatus(204);
-					})
-					.catch(next);
+					);
+
+					res.sendStatus(204);
+				} catch (error) {
+					next(error);
+				}
 			}
 		);
 	}

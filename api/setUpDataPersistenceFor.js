@@ -5,7 +5,7 @@ module.exports = (app, knex) => {
 	app.set("knex", knex);
 
 	const persistenceMethods = {
-		saveRecord(recordType, req, recordTypeParticulars) {
+		async saveRecord(recordType, req, recordTypeParticulars) {
 			const userSettableData = pick(
 				req.body,
 				recordTypeParticulars.userSettableFields
@@ -21,21 +21,27 @@ module.exports = (app, knex) => {
 				id: uuidv4(),
 			};
 
-			return this.get("knex")(recordType)
-				.insert(dataToInsert)
-				.then(() => dataToInsert);
+			await this.get("knex")(recordType).insert(dataToInsert);
+
+			return dataToInsert;
 		},
-		updateRecord(recordType, data, userSettableFields, record) {
+		async updateRecord(
+			recordType,
+			data,
+			userSettableFields,
+			record
+		) {
 			const userSettableData = pick(data, userSettableFields);
 
 			const dataToUpdate = {
 				...userSettableData,
 			};
 
-			return this.get("knex")(recordType)
+			await this.get("knex")(recordType)
 				.update(dataToUpdate)
-				.where("id", "=", record.id)
-				.then(() => dataToUpdate);
+				.where("id", "=", record.id);
+
+			return dataToUpdate;
 		},
 		deleteRecord(recordType, record) {
 			return this.get("knex")(recordType)
@@ -45,12 +51,11 @@ module.exports = (app, knex) => {
 		getAllRecords(recordType) {
 			return this.get("knex").select().from(recordType);
 		},
-		getSavedRecord(recordType, id) {
+		async getSavedRecord(recordType, id) {
 			return this.get("knex")
 				.select()
 				.from(recordType)
-				.where({ id })
-				.then((rows) => rows[0]);
+				.where({ id })[0];
 		},
 	};
 

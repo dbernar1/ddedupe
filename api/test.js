@@ -410,16 +410,15 @@ const composePath = (pathPattern, pathParams) => {
 
 	return path;
 };
-function performRequest(requestBody, pathParams) {
+async function performRequest(requestBody, pathParams) {
 	const path = pathParams
 		? composePath(this.pathPattern, pathParams)
 		: this.pathPattern;
 
-	return request(this.app)
+	this.res = await request(this.app)
 		[this.httpMethod.toLowerCase()](path)
 		.set("Authorization", `Bearer ${this.token}`)
-		.send(requestBody)
-		.then((res) => (this.res = res));
+		.send(requestBody);
 }
 
 module.exports = {
