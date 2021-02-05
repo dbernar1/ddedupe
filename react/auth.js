@@ -89,6 +89,8 @@ const createAuth = ({
 							),
 						}
 					);
+				} catch (error) {
+					throw error;
 				} finally {
 					setUser(null);
 					removeUserData();
