@@ -92,6 +92,7 @@ const createProviderCreator = ({ useAuthHeaders, baseUrl }) => (
 								recordLocation,
 								0,
 								{
+									...records[recordLocation],
 									...record,
 									id,
 								}
