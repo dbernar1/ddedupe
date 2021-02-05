@@ -35,13 +35,14 @@ module.exports = function (recordType, recordTypeDefinition) {
 				recordType,
 				recordTypeDefinition.validate
 			),
-			(req, res, next) => {
+			async (req, res, next) => {
 				try {
-					const savedRecord = req.app.saveRecord(
+					const savedRecord = await req.app.saveRecord(
 						recordType,
 						req,
 						recordTypeDefinition
 					);
+
 					res.send(
 						recordTypeDefinition.toJSON(
 							savedRecord
@@ -60,17 +61,17 @@ module.exports = function (recordType, recordTypeDefinition) {
 			"admin" === recordTypeDefinition.listRequirement
 				? requireLoggedInAdmin
 				: requireLoggedInUser,
-			(req, res, next) => {
+			async (req, res, next) => {
 				try {
-					const records = await(
-						"getAll" in recordTypeDefinition
-							? recordTypeDefinition.getAll(
-									req.app
-							  )
-							: req.app.getAllRecords(
-									recordType
-							  )
-					);
+					const records = await ("getAll" in
+					recordTypeDefinition
+						? recordTypeDefinition.getAll(
+								req.app
+						  )
+						: req.app.getAllRecords(
+								recordType
+						  ));
+
 					res.send(
 						records.map(
 							recordTypeDefinition.toJSON
@@ -95,13 +96,14 @@ module.exports = function (recordType, recordTypeDefinition) {
 			requireExistingRecord(recordType),
 			async (req, res, next) => {
 				try {
-					const updatedRecords = await req.app.updateRecord(
+					const updatedRecord = await req.app.updateRecord(
 						recordType,
 						req.body,
 						recordTypeDefinition.userUpdatableFields ||
 							recordTypeDefinition.userSettableFields,
 						req.requestedRecord
 					);
+
 					res.send(
 						recordTypeDefinition.toJSON({
 							...req.requestedRecord,

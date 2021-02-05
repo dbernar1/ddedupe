@@ -208,10 +208,10 @@ function itShouldSaveRecord(expectedRecord) {
 		for (const [fieldName, expectedValue] of Object.entries(
 			expectedRecord
 		)) {
-			it(`should include ${fieldName}`, function () {
+			it(`should include ${fieldName}`, async function () {
 				if ("function" === typeof expectedValue) {
 					expect(
-						expectedValue.call(
+						await expectedValue.call(
 							this,
 							this.savedRecord[
 								fieldName

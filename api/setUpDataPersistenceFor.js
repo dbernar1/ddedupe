@@ -11,13 +11,16 @@ module.exports = (app, knex) => {
 				recordTypeParticulars.userSettableFields
 			);
 
+			let recordExtras = {};
+			if (recordTypeParticulars.createRecordExtras) {
+				recordExtras = await recordTypeParticulars.createRecordExtras(
+					req
+				);
+			}
+
 			const dataToInsert = {
 				...userSettableData,
-				...(recordTypeParticulars.createRecordExtras
-					? recordTypeParticulars.createRecordExtras(
-							req
-					  )
-					: {}),
+				...recordExtras,
 				id: uuidv4(),
 			};
 
@@ -52,10 +55,12 @@ module.exports = (app, knex) => {
 			return this.get("knex").select().from(recordType);
 		},
 		async getSavedRecord(recordType, id) {
-			return this.get("knex")
+			const records = await this.get("knex")
 				.select()
 				.from(recordType)
-				.where({ id })[0];
+				.where({ id });
+
+			return records[0];
 		},
 	};
 
