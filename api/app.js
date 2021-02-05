@@ -1,27 +1,29 @@
-const passport = require( 'passport' );
-const AnonymousStrategy = require( 'passport-anonymous' );
+const passport = require("passport");
+const AnonymousStrategy = require("passport-anonymous");
 
-module.exports = appConfig => {
-	const app = require( 'express' )();
-	app.use( require( 'body-parser' ).json() );
-	app.use( require( 'cors' )() );
+module.exports = (appConfig) => {
+	const app = require("express")();
+	app.use(require("body-parser").json());
+	app.use(require("cors")());
 
-	require( './setUpDataPersistenceFor' )(
+	require("./setUpDataPersistenceFor")(app, appConfig.knex);
+
+	app.providesCrudEndpointsFor = require("./provideCrudEndpointsFor");
+
+	const authenticationStrategies = appConfig.configureAuthentication(
 		app,
-		appConfig.knex
+		passport
 	);
 
-	app.providesCrudEndpointsFor = require( './provideCrudEndpointsFor' );
+	passport.use(new AnonymousStrategy());
 
-	const authenticationStrategies = appConfig.configureAuthentication( app, passport );
-
-	passport.use( new AnonymousStrategy() );
-
-	app.use( passport.initialize() );
-	app.use( passport.authenticate(
-		authenticationStrategies.concat( [ 'anonymous' ] ),
-		{ session: false, }
-	) );
+	app.use(passport.initialize());
+	app.use(
+		passport.authenticate(
+			authenticationStrategies.concat(["anonymous"]),
+			{ session: false }
+		)
+	);
 
 	return app;
 };

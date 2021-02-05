@@ -4,17 +4,17 @@ const {
 	requireExistingRecord,
 	confirmValidDataSentFor,
 	allowAnonymousUser,
-} = require( './middleware' );
+} = require("./middleware");
 
-module.exports = function( recordType, recordTypeDefinition ) {
-	const listAndCreatePath = `/${ recordType }`;
-	const updateAndDeletePath = `/${ recordType }/:${ recordType }`;
+module.exports = function (recordType, recordTypeDefinition) {
+	const listAndCreatePath = `/${recordType}`;
+	const updateAndDeletePath = `/${recordType}/:${recordType}`;
 
 	const defaultsForAnyRecordType = {
-		toJSON( record ) {
+		toJSON(record) {
 			return record;
 		},
-		endpointsIncluded: [ 'create', 'list', 'update', 'delete', ],
+		endpointsIncluded: ["create", "list", "update", "delete"],
 	};
 
 	recordTypeDefinition = {
@@ -22,89 +22,120 @@ module.exports = function( recordType, recordTypeDefinition ) {
 		...recordTypeDefinition,
 	};
 
-	if ( recordTypeDefinition.endpointsIncluded.includes( 'create' ) ) {
+	if (recordTypeDefinition.endpointsIncluded.includes("create")) {
 		this.post(
 			listAndCreatePath,
-			'admin' === recordTypeDefinition.createRequirement ? requireLoggedInAdmin
-				: 'none' === recordTypeDefinition.createRequirement ? allowAnonymousUser
+			"admin" === recordTypeDefinition.createRequirement
+				? requireLoggedInAdmin
+				: "none" ===
+				  recordTypeDefinition.createRequirement
+				? allowAnonymousUser
 				: requireLoggedInUser,
-			confirmValidDataSentFor( recordType, recordTypeDefinition.validate ),
-			( req, res, next ) => {
-				req.app.saveRecord(
-					recordType,
-					req,
-					recordTypeDefinition
-				)
-				.then( savedRecord => {
-					res.send( recordTypeDefinition.toJSON( savedRecord ) );
-				} )
-				.catch( next );
+			confirmValidDataSentFor(
+				recordType,
+				recordTypeDefinition.validate
+			),
+			(req, res, next) => {
+				req.app
+					.saveRecord(
+						recordType,
+						req,
+						recordTypeDefinition
+					)
+					.then((savedRecord) => {
+						res.send(
+							recordTypeDefinition.toJSON(
+								savedRecord
+							)
+						);
+					})
+					.catch(next);
 			}
 		);
 	}
 
-	if ( recordTypeDefinition.endpointsIncluded.includes( 'list' ) ) {
+	if (recordTypeDefinition.endpointsIncluded.includes("list")) {
 		this.get(
 			listAndCreatePath,
-			'admin' === recordTypeDefinition.listRequirement
+			"admin" === recordTypeDefinition.listRequirement
 				? requireLoggedInAdmin
 				: requireLoggedInUser,
-			( req, res, next ) => {
-				( 'getAll' in recordTypeDefinition
-					? recordTypeDefinition.getAll( req.app )
-					: req.app.getAllRecords( recordType )
+			(req, res, next) => {
+				("getAll" in recordTypeDefinition
+					? recordTypeDefinition.getAll(req.app)
+					: req.app.getAllRecords(recordType)
 				)
-				.then( records => res.send( records.map( recordTypeDefinition.toJSON ) ) )
-				.catch( next );
+					.then((records) =>
+						res.send(
+							records.map(
+								recordTypeDefinition.toJSON
+							)
+						)
+					)
+					.catch(next);
 			}
 		);
 	}
 
-	if ( recordTypeDefinition.endpointsIncluded.includes( 'update' ) ) {
+	if (recordTypeDefinition.endpointsIncluded.includes("update")) {
 		this.put(
 			updateAndDeletePath,
 			requireLoggedInAdmin,
 			confirmValidDataSentFor(
 				recordType,
-				recordTypeDefinition.validateUpdate || recordTypeDefinition.validate
+				recordTypeDefinition.validateUpdate ||
+					recordTypeDefinition.validate
 			),
-			requireExistingRecord( recordType ),
-			( req, res, next ) => {
-				req.app.updateRecord(
-					recordType,
-					req.body,
-					recordTypeDefinition.userUpdatableFields || recordTypeDefinition.userSettableFields,
-					req.requestedRecord
-				)
-				.then( updatedRecord => {
-					res.send( recordTypeDefinition.toJSON( {
-						...req.requestedRecord,
-						...updatedRecord,
-					} ) );
-				} )
-				.catch( next );
+			requireExistingRecord(recordType),
+			(req, res, next) => {
+				req.app
+					.updateRecord(
+						recordType,
+						req.body,
+						recordTypeDefinition.userUpdatableFields ||
+							recordTypeDefinition.userSettableFields,
+						req.requestedRecord
+					)
+					.then((updatedRecord) => {
+						res.send(
+							recordTypeDefinition.toJSON(
+								{
+									...req.requestedRecord,
+									...updatedRecord,
+								}
+							)
+						);
+					})
+					.catch(next);
 			}
 		);
 	}
 
-	if ( recordTypeDefinition.endpointsIncluded.includes( 'delete' ) ) {
+	if (recordTypeDefinition.endpointsIncluded.includes("delete")) {
 		this.delete(
 			updateAndDeletePath,
 			requireLoggedInAdmin,
-			requireExistingRecord( recordType ),
-			( req, res, next ) => {
+			requireExistingRecord(recordType),
+			(req, res, next) => {
 				if (
-					'validateDeletion' in recordTypeDefinition
-					&& ! recordTypeDefinition.validateDeletion( req )
+					"validateDeletion" in
+						recordTypeDefinition &&
+					!recordTypeDefinition.validateDeletion(
+						req
+					)
 				) {
-					return res.sendStatus( 400 );
+					return res.sendStatus(400);
 				}
 
-				req.app.deleteRecord( recordType, req.requestedRecord )
-				.then( () => {
-					res.sendStatus( 204 );
-				} )
-				.catch( next );
+				req.app
+					.deleteRecord(
+						recordType,
+						req.requestedRecord
+					)
+					.then(() => {
+						res.sendStatus(204);
+					})
+					.catch(next);
 			}
 		);
 	}

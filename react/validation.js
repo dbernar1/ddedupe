@@ -1,49 +1,42 @@
-import { useState, } from 'react';
-import isEmail from 'validator/lib/isEmail';
-import isEmpty from 'validator/lib/isEmpty';
-import passwordSchema from '../api/passwordSchema';
+import { useState } from "react";
+import isEmail from "validator/lib/isEmail";
+import isEmpty from "validator/lib/isEmpty";
+import passwordSchema from "../api/passwordSchema";
 
-const required = value => ! isEmpty( value );
+const required = (value) => !isEmpty(value);
 
 const validations = {
-        isEmail,
-        required,
-        'valid-password': ( value ) => passwordSchema.validate( value ),
+	isEmail,
+	required,
+	"valid-password": (value) => passwordSchema.validate(value),
 };
 
-export const validate = ( rules ) => {
-        let valid = true;
+export const validate = (rules) => {
+	let valid = true;
 
-        rules.forEach( ( [ value, setError, rulesForField, ] ) => {
-                let errorFoundForThisValue = '';
+	rules.forEach(([value, setError, rulesForField]) => {
+		let errorFoundForThisValue = "";
 
-                for ( const [ message, check ] of Object.entries( rulesForField ) ) {
-                        const isValid = 'function' === typeof check
-                                ? check( value )
-                                : validations[ check ]( value );
-                        if (
-                                ! errorFoundForThisValue
-                                && ! isValid
-                        ) {
-                                errorFoundForThisValue = message;
-                                valid = false;
-                        }
-                }
+		for (const [message, check] of Object.entries(rulesForField)) {
+			const isValid =
+				"function" === typeof check
+					? check(value)
+					: validations[check](value);
+			if (!errorFoundForThisValue && !isValid) {
+				errorFoundForThisValue = message;
+				valid = false;
+			}
+		}
 
-                setError( errorFoundForThisValue );
-        } );
+		setError(errorFoundForThisValue);
+	});
 
-        return valid;
+	return valid;
 };
 
-export const useField = ( validationRules, initialValue='' ) => {
-        const [ value, setValue ] = useState( initialValue );
-        const [ error, setError ] = useState( '' );
+export const useField = (validationRules, initialValue = "") => {
+	const [value, setValue] = useState(initialValue);
+	const [error, setError] = useState("");
 
-        return [
-                value,
-                setValue,
-                error,
-                [ value, setError, validationRules ],
-        ];
+	return [value, setValue, error, [value, setError, validationRules]];
 };
