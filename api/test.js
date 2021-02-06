@@ -417,7 +417,11 @@ async function performRequest(requestBody, pathParams) {
 
 	this.res = await request(this.app)
 		[this.httpMethod.toLowerCase()](path)
-		.set("Authorization", `Bearer ${this.token}`)
+		.set(
+			this.token
+				? { Authorization: `Bearer ${this.token}` }
+				: {}
+		)
 		.send(requestBody);
 }
 
