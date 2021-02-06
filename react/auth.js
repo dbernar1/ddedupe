@@ -78,15 +78,14 @@ const createAuth = ({
 				setUser(data);
 				persistUserData(data);
 			},
+			getAuthHeaders,
 			async signOut() {
 				try {
 					await axios.post(
 						logoutUrl,
 						{},
 						{
-							headers: getAuthHeaders(
-								user
-							),
+							headers: getAuthHeaders(),
 						}
 					);
 				} catch (error) {
