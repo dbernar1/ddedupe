@@ -71,7 +71,7 @@ const createAuth = ({
 		return {
 			user,
 			async signIn(email, password) {
-				const { data } = axios.post(loginUrl, {
+				const { data } = await axios.post(loginUrl, {
 					email,
 					password,
 				});
