@@ -6,11 +6,6 @@ module.exports = (app, knex) => {
 
 	const persistenceMethods = {
 		async saveRecord(recordType, req, recordTypeParticulars) {
-			const userSettableData = pick(
-				req.body,
-				recordTypeParticulars.userSettableFields
-			);
-
 			let recordExtras = {};
 			if (recordTypeParticulars.createRecordExtras) {
 				recordExtras = await recordTypeParticulars.createRecordExtras(
@@ -19,7 +14,7 @@ module.exports = (app, knex) => {
 			}
 
 			const dataToInsert = {
-				...userSettableData,
+				...req.body,
 				...recordExtras,
 				id: uuidv4(),
 			};
@@ -34,10 +29,8 @@ module.exports = (app, knex) => {
 			userSettableFields,
 			record
 		) {
-			const userSettableData = pick(data, userSettableFields);
-
 			const dataToUpdate = {
-				...userSettableData,
+				...data,
 			};
 
 			await this.get("knex")(recordType)

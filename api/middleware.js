@@ -1,3 +1,10 @@
+const { pick } = require("lodash");
+
+const filterWhitelistedAttributesFor = (allowedFields) => (req, res, next) => {
+	req.body = pick(req.body, allowedFields);
+	next();
+};
+
 const requireLoggedInUser = (req, res, next) => {
 	if (req.user) {
 		next();
@@ -50,4 +57,5 @@ module.exports = {
 	requireExistingRecord,
 	confirmValidDataSentFor,
 	allowAnonymousUser,
+	filterWhitelistedAttributesFor,
 };

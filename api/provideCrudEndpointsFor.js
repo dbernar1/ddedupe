@@ -4,6 +4,7 @@ const {
 	requireExistingRecord,
 	confirmValidDataSentFor,
 	allowAnonymousUser,
+	filterWhitelistedAttributesFor,
 } = require("./middleware");
 
 module.exports = function (recordType, recordTypeDefinition) {
@@ -31,6 +32,9 @@ module.exports = function (recordType, recordTypeDefinition) {
 				  recordTypeDefinition.createRequirement
 				? allowAnonymousUser
 				: requireLoggedInUser,
+			filterWhitelistedAttributesFor(
+				recordTypeDefinition.userSettableFields
+			),
 			confirmValidDataSentFor(
 				recordType,
 				recordTypeDefinition.validate
@@ -88,6 +92,10 @@ module.exports = function (recordType, recordTypeDefinition) {
 		this.put(
 			updateAndDeletePath,
 			requireLoggedInAdmin,
+			filterWhitelistedAttributesFor(
+				recordTypeDefinition.userUpdatableFields ||
+					recordTypeDefinition.userSettableFields
+			),
 			confirmValidDataSentFor(
 				recordType,
 				recordTypeDefinition.validateUpdate ||
