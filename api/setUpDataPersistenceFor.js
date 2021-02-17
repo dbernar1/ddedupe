@@ -1,59 +1,31 @@
 const uuidv4 = require("uuid").v4;
-const { pick } = require("lodash");
+const { pick, capitalize } = require("lodash");
 
-module.exports = (app, knex) => {
-	app.set("knex", knex);
+module.exports = (app, db) => {
+	app.set("db", db);
 
 	const persistenceMethods = {
-		async saveRecord(recordType, req, recordTypeParticulars) {
-			let recordExtras = {};
-			if (recordTypeParticulars.createRecordExtras) {
-				recordExtras = await recordTypeParticulars.createRecordExtras(
-					req
-				);
-			}
-
-			const dataToInsert = {
-				...req.body,
-				...recordExtras,
-				id: uuidv4(),
-			};
-
-			await this.get("knex")(recordType).insert(dataToInsert);
-
-			return dataToInsert;
+		getModel(recordTypeName) {
+			return this.get("db")[capitalize(recordTypeName)];
 		},
-		async updateRecord(
-			recordType,
-			data,
-			userSettableFields,
-			record
-		) {
-			const dataToUpdate = {
-				...data,
-			};
-
-			await this.get("knex")(recordType)
-				.update(dataToUpdate)
-				.where("id", "=", record.id);
-
-			return dataToUpdate;
+		async saveRecord(recordTypeName, data) {
+			return await this.getModel(recordTypeName).create(data);
 		},
-		deleteRecord(recordType, record) {
-			return this.get("knex")(recordType)
-				.where("id", record.id)
-				.delete();
-		},
-		getAllRecords(recordType) {
-			return this.get("knex").select().from(recordType);
-		},
-		async getSavedRecord(recordType, id) {
-			const records = await this.get("knex")
-				.select()
-				.from(recordType)
-				.where({ id });
+		async updateRecord(record, data) {
+			Object.keys(data).forEach((fieldName) => {
+				record[fieldName] = data[fieldName];
+			});
 
-			return records[0];
+			return await record.save();
+		},
+		async deleteRecord(record) {
+			return await record.destroy();
+		},
+		async getAllRecords(recordTypeName) {
+			return await this.getModel(recordTypeName).findAll();
+		},
+		async getSavedRecord(recordTypeName, id) {
+			return await this.getModel(recordTypeName).findByPk(id);
 		},
 	};
 

@@ -1,7 +1,17 @@
 const { pick } = require("lodash");
 
-const filterWhitelistedAttributesFor = (allowedFields) => (req, res, next) => {
-	req.body = pick(req.body, allowedFields);
+const filterWhitelistedAttributesFor = (
+	recordTypeName,
+	actionType = "insert"
+) => (req, res, next) => {
+	const model = req.app.getModel(recordTypeName);
+
+	req.whitelistedBody = pick(
+		req.body,
+		"insert" === actionType || !(userUpdatableFields in model)
+			? model.userSettableFields
+			: model.userUpdatableFields
+	);
 	next();
 };
 

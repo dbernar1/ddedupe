@@ -6,7 +6,7 @@ module.exports = (appConfig) => {
 	app.use(require("body-parser").json());
 	app.use(require("cors")());
 
-	require("./setUpDataPersistenceFor")(app, appConfig.knex);
+	require("./setUpDataPersistenceFor")(app, appConfig.db);
 
 	app.providesCrudEndpointsFor = require("./provideCrudEndpointsFor");
 

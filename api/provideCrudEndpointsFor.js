@@ -12,10 +12,8 @@ module.exports = function (recordTypeName, recordTypeDefinition) {
 	const updateAndDeletePath = `/${recordTypeName}/:${recordTypeName}`;
 
 	const defaultsForAnyRecordType = {
-		toJSON(record) {
-			return record;
-		},
 		endpointsIncluded: ["create", "list", "update", "delete"],
+		createRequirement: "admin",
 	};
 
 	recordTypeDefinition = {
@@ -32,9 +30,7 @@ module.exports = function (recordTypeName, recordTypeDefinition) {
 				  recordTypeDefinition.createRequirement
 				? allowAnonymousUser
 				: requireLoggedInUser,
-			filterWhitelistedAttributesFor(
-				recordTypeDefinition.userSettableFields
-			),
+			filterWhitelistedAttributesFor(recordTypeName),
 			confirmValidDataSentFor(
 				recordTypeName,
 				recordTypeDefinition.validate
@@ -43,15 +39,10 @@ module.exports = function (recordTypeName, recordTypeDefinition) {
 				try {
 					const savedRecord = await req.app.saveRecord(
 						recordTypeName,
-						req,
-						recordTypeDefinition
+						req.whitelistedBody
 					);
 
-					res.send(
-						recordTypeDefinition.toJSON(
-							savedRecord
-						)
-					);
+					res.send(savedRecord);
 				} catch (error) {
 					next(error);
 				}
@@ -92,10 +83,7 @@ module.exports = function (recordTypeName, recordTypeDefinition) {
 		this.put(
 			updateAndDeletePath,
 			requireLoggedInAdmin,
-			filterWhitelistedAttributesFor(
-				recordTypeDefinition.userUpdatableFields ||
-					recordTypeDefinition.userSettableFields
-			),
+			filterWhitelistedAttributesFor(recordTypeName),
 			confirmValidDataSentFor(
 				recordTypeName,
 				recordTypeDefinition.validateUpdate ||
