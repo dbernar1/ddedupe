@@ -31,10 +31,6 @@ module.exports = function (recordTypeName, recordTypeDefinition) {
 				? allowAnonymousUser
 				: requireLoggedInUser,
 			filterWhitelistedAttributesFor(recordTypeName),
-			confirmValidDataSentFor(
-				recordTypeName,
-				recordTypeDefinition.validate
-			),
 			async (req, res, next) => {
 				try {
 					const savedRecord = await req.app.saveRecord(
