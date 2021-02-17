@@ -54,20 +54,16 @@ module.exports = function (recordTypeName, recordTypeDefinition) {
 				: requireLoggedInUser,
 			async (req, res, next) => {
 				try {
-					const records = await ("getAll" in
-					recordTypeDefinition
-						? recordTypeDefinition.getAll(
-								req.app
-						  )
+					const model = this.getModel(
+						recordTypeName
+					);
+					const records = await ("getAll" in model
+						? model.getAll()
 						: req.app.getAllRecords(
 								recordTypeName
 						  ));
 
-					res.send(
-						records.map(
-							recordTypeDefinition.toJSON
-						)
-					);
+					res.send(records);
 				} catch (error) {
 					next(error);
 				}
