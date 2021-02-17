@@ -7,9 +7,9 @@ const {
 	filterWhitelistedAttributesFor,
 } = require("./middleware");
 
-module.exports = function (recordType, recordTypeDefinition) {
-	const listAndCreatePath = `/${recordType}`;
-	const updateAndDeletePath = `/${recordType}/:${recordType}`;
+module.exports = function (recordTypeName, recordTypeDefinition) {
+	const listAndCreatePath = `/${recordTypeName}`;
+	const updateAndDeletePath = `/${recordTypeName}/:${recordTypeName}`;
 
 	const defaultsForAnyRecordType = {
 		toJSON(record) {
@@ -36,13 +36,13 @@ module.exports = function (recordType, recordTypeDefinition) {
 				recordTypeDefinition.userSettableFields
 			),
 			confirmValidDataSentFor(
-				recordType,
+				recordTypeName,
 				recordTypeDefinition.validate
 			),
 			async (req, res, next) => {
 				try {
 					const savedRecord = await req.app.saveRecord(
-						recordType,
+						recordTypeName,
 						req,
 						recordTypeDefinition
 					);
@@ -73,7 +73,7 @@ module.exports = function (recordType, recordTypeDefinition) {
 								req.app
 						  )
 						: req.app.getAllRecords(
-								recordType
+								recordTypeName
 						  ));
 
 					res.send(
@@ -97,15 +97,15 @@ module.exports = function (recordType, recordTypeDefinition) {
 					recordTypeDefinition.userSettableFields
 			),
 			confirmValidDataSentFor(
-				recordType,
+				recordTypeName,
 				recordTypeDefinition.validateUpdate ||
 					recordTypeDefinition.validate
 			),
-			requireExistingRecord(recordType),
+			requireExistingRecord(recordTypeName),
 			async (req, res, next) => {
 				try {
 					const updatedRecord = await req.app.updateRecord(
-						recordType,
+						recordTypeName,
 						req.body,
 						recordTypeDefinition.userUpdatableFields ||
 							recordTypeDefinition.userSettableFields,
@@ -129,7 +129,7 @@ module.exports = function (recordType, recordTypeDefinition) {
 		this.delete(
 			updateAndDeletePath,
 			requireLoggedInAdmin,
-			requireExistingRecord(recordType),
+			requireExistingRecord(recordTypeName),
 			async (req, res, next) => {
 				if (
 					"validateDeletion" in
@@ -143,7 +143,7 @@ module.exports = function (recordType, recordTypeDefinition) {
 
 				try {
 					await req.app.deleteRecord(
-						recordType,
+						recordTypeName,
 						req.requestedRecord
 					);
 
