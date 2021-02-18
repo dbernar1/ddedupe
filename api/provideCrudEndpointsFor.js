@@ -2,19 +2,15 @@ const {
 	requireLoggedInUser,
 	requireLoggedInAdmin,
 	requireExistingRecord,
-	confirmValidDataSentFor,
 	allowAnonymousUser,
 	filterWhitelistedAttributesFor,
 } = require("./middleware");
 
-module.exports = function (recordType, recordTypeDefinition) {
-	const listAndCreatePath = `/${recordType}`;
-	const updateAndDeletePath = `/${recordType}/:${recordType}`;
+module.exports = function (recordTypeName, recordTypeDefinition) {
+	const listAndCreatePath = `/${recordTypeName}`;
+	const updateAndDeletePath = `/${recordTypeName}/:${recordTypeName}`;
 
 	const defaultsForAnyRecordType = {
-		toJSON(record) {
-			return record;
-		},
 		endpointsIncluded: ["create", "list", "update", "delete"],
 	};
 
@@ -32,26 +28,23 @@ module.exports = function (recordType, recordTypeDefinition) {
 				  recordTypeDefinition.createRequirement
 				? allowAnonymousUser
 				: requireLoggedInUser,
-			filterWhitelistedAttributesFor(
-				recordTypeDefinition.userSettableFields
-			),
-			confirmValidDataSentFor(
-				recordType,
-				recordTypeDefinition.validate
-			),
+			filterWhitelistedAttributesFor(recordTypeName),
 			async (req, res, next) => {
 				try {
 					const savedRecord = await req.app.saveRecord(
-						recordType,
-						req,
-						recordTypeDefinition
+						recordTypeName,
+						{
+							...req.whitelistedBody,
+							...("createRecordExtras" in
+							recordTypeDefinition
+								? recordTypeDefinition.createRecordExtras(
+										req
+								  )
+								: {}),
+						}
 					);
 
-					res.send(
-						recordTypeDefinition.toJSON(
-							savedRecord
-						)
-					);
+					res.send(savedRecord);
 				} catch (error) {
 					next(error);
 				}
@@ -67,20 +60,16 @@ module.exports = function (recordType, recordTypeDefinition) {
 				: requireLoggedInUser,
 			async (req, res, next) => {
 				try {
-					const records = await ("getAll" in
-					recordTypeDefinition
-						? recordTypeDefinition.getAll(
-								req.app
-						  )
+					const model = this.getModel(
+						recordTypeName
+					);
+					const records = await ("getAll" in model
+						? model.getAll()
 						: req.app.getAllRecords(
-								recordType
+								recordTypeName
 						  ));
 
-					res.send(
-						records.map(
-							recordTypeDefinition.toJSON
-						)
-					);
+					res.send(records);
 				} catch (error) {
 					next(error);
 				}
@@ -92,32 +81,16 @@ module.exports = function (recordType, recordTypeDefinition) {
 		this.put(
 			updateAndDeletePath,
 			requireLoggedInAdmin,
-			filterWhitelistedAttributesFor(
-				recordTypeDefinition.userUpdatableFields ||
-					recordTypeDefinition.userSettableFields
-			),
-			confirmValidDataSentFor(
-				recordType,
-				recordTypeDefinition.validateUpdate ||
-					recordTypeDefinition.validate
-			),
-			requireExistingRecord(recordType),
+			filterWhitelistedAttributesFor(recordTypeName),
+			requireExistingRecord(recordTypeName),
 			async (req, res, next) => {
 				try {
 					const updatedRecord = await req.app.updateRecord(
-						recordType,
-						req.body,
-						recordTypeDefinition.userUpdatableFields ||
-							recordTypeDefinition.userSettableFields,
-						req.requestedRecord
+						req.requestedRecord,
+						req.whitelistedBody
 					);
 
-					res.send(
-						recordTypeDefinition.toJSON({
-							...req.requestedRecord,
-							...updatedRecord,
-						})
-					);
+					res.send(updatedRecord);
 				} catch (error) {
 					next(error);
 				}
@@ -129,7 +102,7 @@ module.exports = function (recordType, recordTypeDefinition) {
 		this.delete(
 			updateAndDeletePath,
 			requireLoggedInAdmin,
-			requireExistingRecord(recordType),
+			requireExistingRecord(recordTypeName),
 			async (req, res, next) => {
 				if (
 					"validateDeletion" in
@@ -143,7 +116,6 @@ module.exports = function (recordType, recordTypeDefinition) {
 
 				try {
 					await req.app.deleteRecord(
-						recordType,
 						req.requestedRecord
 					);
 

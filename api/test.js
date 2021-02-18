@@ -32,6 +32,16 @@ function itShouldRequireLoggedInAdmin() {
 
 function itShouldValidate(recordType, rules) {
 	describe("Validation rules", function () {
+		before(function () {
+			this.confirmInvalidRequest = async (record) => {
+				await this.performRequest(
+					record,
+					await this.fabricatePathParams()
+				);
+				expect(this.res.status).to.equal(400);
+			};
+		});
+
 		for (const [fieldName, rulesForField] of Object.entries(
 			rules
 		)) {
@@ -54,16 +64,14 @@ function itShouldValidate(recordType, rules) {
 								record = await this.getValidRecord(
 									recordType
 								);
-								delete record[
+								record[
 									fieldName
-								];
-								await this.performRequest(
+								] = "";
+
+								await this.confirmInvalidRequest(
 									record
 								);
-								expect(
-									this.res
-										.status
-								).to.equal(400);
+
 								break;
 							case "reference existing":
 								record = await this.getValidRecord(
@@ -72,13 +80,11 @@ function itShouldValidate(recordType, rules) {
 								record[
 									fieldName
 								] = uuidv4();
-								await this.performRequest(
+
+								await this.confirmInvalidRequest(
 									record
 								);
-								expect(
-									this.res
-										.status
-								).to.equal(400);
+
 								break;
 							case "format:date":
 								record = await this.getValidRecord(
@@ -88,13 +94,9 @@ function itShouldValidate(recordType, rules) {
 									fieldName
 								] =
 									"Not-a-date";
-								await this.performRequest(
+								await this.confirmInvalidRequest(
 									record
 								);
-								expect(
-									this.res
-										.status
-								).to.equal(400);
 								break;
 							case "format:email":
 								record = await this.getValidRecord(
@@ -104,13 +106,11 @@ function itShouldValidate(recordType, rules) {
 									fieldName
 								] =
 									"not-an-email-address";
-								await this.performRequest(
+
+								await this.confirmInvalidRequest(
 									record
 								);
-								expect(
-									this.res
-										.status
-								).to.equal(400);
+
 								break;
 							case "unique":
 								record = await this.getValidRecord(
@@ -122,7 +122,8 @@ function itShouldValidate(recordType, rules) {
 								const secondRecord = await this.getValidRecord(
 									recordType
 								);
-								await this.performRequest(
+
+								await this.confirmInvalidRequest(
 									{
 										...secondRecord,
 										[fieldName]:
@@ -132,10 +133,6 @@ function itShouldValidate(recordType, rules) {
 									}
 								);
 
-								expect(
-									this.res
-										.status
-								).to.equal(400);
 								break;
 							case "meets-password-requirements":
 								await Promise.all(
@@ -154,15 +151,9 @@ function itShouldValidate(recordType, rules) {
 											record[
 												fieldName
 											] = invalidPassword;
-											await this.performRequest(
+
+											await this.confirmInvalidRequest(
 												record
-											);
-											expect(
-												this
-													.res
-													.status
-											).to.equal(
-												400
 											);
 										}
 									)
@@ -182,13 +173,11 @@ function itShouldValidate(recordType, rules) {
 									.format(
 										"YYYY-MM-DD"
 									);
-								await this.performRequest(
+
+								await this.confirmInvalidRequest(
 									record
 								);
-								expect(
-									this.res
-										.status
-								).to.equal(400);
+
 								break;
 							default:
 								expect(false).to
@@ -410,6 +399,7 @@ const composePath = (pathPattern, pathParams) => {
 
 	return path;
 };
+
 async function performRequest(requestBody, pathParams) {
 	const path = pathParams
 		? composePath(this.pathPattern, pathParams)

@@ -1,7 +1,17 @@
 const { pick } = require("lodash");
 
-const filterWhitelistedAttributesFor = (allowedFields) => (req, res, next) => {
-	req.body = pick(req.body, allowedFields);
+const filterWhitelistedAttributesFor = (
+	recordTypeName,
+	actionType = "insert"
+) => (req, res, next) => {
+	const model = req.app.getModel(recordTypeName);
+
+	req.whitelistedBody = pick(
+		req.body,
+		"insert" === actionType || !("userUpdatableFields" in model)
+			? model.userSettableFields
+			: model.userUpdatableFields
+	);
 	next();
 };
 
@@ -25,10 +35,10 @@ const requireLoggedInAdmin = (req, res, next) => {
 	});
 };
 
-const requireExistingRecord = (recordType) => async (req, res, next) => {
+const requireExistingRecord = (recordTypeName) => async (req, res, next) => {
 	const record = await req.app.getSavedRecord(
-		recordType,
-		req.params[recordType]
+		recordTypeName,
+		req.params[recordTypeName]
 	);
 
 	if (record) {
@@ -39,23 +49,10 @@ const requireExistingRecord = (recordType) => async (req, res, next) => {
 	}
 };
 
-const confirmValidDataSentFor = (recordType, validateRecord) => async (
-	req,
-	res,
-	next
-) => {
-	if (await validateRecord(req.body, req.app, req.params[recordType])) {
-		next();
-	} else {
-		res.sendStatus(400);
-	}
-};
-
 module.exports = {
 	requireLoggedInUser,
 	requireLoggedInAdmin,
 	requireExistingRecord,
-	confirmValidDataSentFor,
 	allowAnonymousUser,
 	filterWhitelistedAttributesFor,
 };
