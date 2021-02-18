@@ -8,7 +8,7 @@ const filterWhitelistedAttributesFor = (
 
 	req.whitelistedBody = pick(
 		req.body,
-		"insert" === actionType || !(userUpdatableFields in model)
+		"insert" === actionType || !("userUpdatableFields" in model)
 			? model.userSettableFields
 			: model.userUpdatableFields
 	);
