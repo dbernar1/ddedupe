@@ -49,29 +49,10 @@ const requireExistingRecord = (recordTypeName) => async (req, res, next) => {
 	}
 };
 
-const confirmValidDataSentFor = (recordTypeName, validateRecord) => async (
-	req,
-	res,
-	next
-) => {
-	if (
-		await validateRecord(
-			req.body,
-			req.app,
-			req.params[recordTypeName]
-		)
-	) {
-		next();
-	} else {
-		res.sendStatus(400);
-	}
-};
-
 module.exports = {
 	requireLoggedInUser,
 	requireLoggedInAdmin,
 	requireExistingRecord,
-	confirmValidDataSentFor,
 	allowAnonymousUser,
 	filterWhitelistedAttributesFor,
 };

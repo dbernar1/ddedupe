@@ -2,7 +2,6 @@ const {
 	requireLoggedInUser,
 	requireLoggedInAdmin,
 	requireExistingRecord,
-	confirmValidDataSentFor,
 	allowAnonymousUser,
 	filterWhitelistedAttributesFor,
 } = require("./middleware");
