@@ -54,11 +54,12 @@ function itShouldValidate(recordType, rules) {
 								record = await this.getValidRecord(
 									recordType
 								);
-								delete record[
+								record[
 									fieldName
-								];
+								] = "";
 								await this.performRequest(
-									record
+									record,
+									await this.fabricatePathParams()
 								);
 								expect(
 									this.res
@@ -73,7 +74,8 @@ function itShouldValidate(recordType, rules) {
 									fieldName
 								] = uuidv4();
 								await this.performRequest(
-									record
+									record,
+									await this.fabricatePathParams()
 								);
 								expect(
 									this.res
@@ -410,6 +412,7 @@ const composePath = (pathPattern, pathParams) => {
 
 	return path;
 };
+
 async function performRequest(requestBody, pathParams) {
 	const path = pathParams
 		? composePath(this.pathPattern, pathParams)

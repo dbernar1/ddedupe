@@ -76,28 +76,15 @@ module.exports = function (recordTypeName, recordTypeDefinition) {
 			updateAndDeletePath,
 			requireLoggedInAdmin,
 			filterWhitelistedAttributesFor(recordTypeName),
-			confirmValidDataSentFor(
-				recordTypeName,
-				recordTypeDefinition.validateUpdate ||
-					recordTypeDefinition.validate
-			),
 			requireExistingRecord(recordTypeName),
 			async (req, res, next) => {
 				try {
 					const updatedRecord = await req.app.updateRecord(
-						recordTypeName,
-						req.body,
-						recordTypeDefinition.userUpdatableFields ||
-							recordTypeDefinition.userSettableFields,
-						req.requestedRecord
+						req.requestedRecord,
+						req.whitelistedBody
 					);
 
-					res.send(
-						recordTypeDefinition.toJSON({
-							...req.requestedRecord,
-							...updatedRecord,
-						})
-					);
+					res.send(updatedRecord);
 				} catch (error) {
 					next(error);
 				}
@@ -123,7 +110,6 @@ module.exports = function (recordTypeName, recordTypeDefinition) {
 
 				try {
 					await req.app.deleteRecord(
-						recordTypeName,
 						req.requestedRecord
 					);
 
