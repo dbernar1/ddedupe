@@ -22,7 +22,10 @@ module.exports = (app, db) => {
 			return await record.destroy();
 		},
 		async getAllRecords(recordTypeName) {
-			return await this.getModel(recordTypeName).findAll();
+			const model = this.getModel(recordTypeName);
+			return await model.findAll({
+				order: model.defaultSorting,
+			});
 		},
 		async getSavedRecord(recordTypeName, id) {
 			return await this.getModel(recordTypeName).findByPk(id);

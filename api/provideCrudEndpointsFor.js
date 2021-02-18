@@ -13,7 +13,6 @@ module.exports = function (recordTypeName, recordTypeDefinition) {
 
 	const defaultsForAnyRecordType = {
 		endpointsIncluded: ["create", "list", "update", "delete"],
-		createRequirement: "admin",
 	};
 
 	recordTypeDefinition = {
@@ -35,7 +34,15 @@ module.exports = function (recordTypeName, recordTypeDefinition) {
 				try {
 					const savedRecord = await req.app.saveRecord(
 						recordTypeName,
-						req.whitelistedBody
+						{
+							...req.whitelistedBody,
+							...("createRecordExtras" in
+							recordTypeDefinition
+								? recordTypeDefinition.createRecordExtras(
+										req
+								  )
+								: {}),
+						}
 					);
 
 					res.send(savedRecord);
