@@ -51,8 +51,10 @@ const createProviderCreator = ({ useAuthHeaders, baseUrl }) => (
 					);
 				}
 			},
-			[`create${capitalizedRecordType}`]: function (record) {
-				const { data } = axios.post(
+			[`create${capitalizedRecordType}`]: async function (
+				record
+			) {
+				const { data } = await axios.post(
 					value.getUrl(),
 					record,
 					{
