@@ -60,14 +60,9 @@ module.exports = function (recordTypeName, recordTypeDefinition) {
 				: requireLoggedInUser,
 			async (req, res, next) => {
 				try {
-					const model = this.getModel(
+					const records = await this.getModel(
 						recordTypeName
-					);
-					const records = await ("getAll" in model
-						? model.getAll()
-						: req.app.getAllRecords(
-								recordTypeName
-						  ));
+					).getAll();
 
 					res.send(records);
 				} catch (error) {
